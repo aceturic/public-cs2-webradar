@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SHOOK | RADAR</title>
+    <!-- Importing modern fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Color Palette */
+            --bg-dark: #09090b;
+            --bg-panel: rgba(24, 24, 27, 0.65);
+            --border-light: rgba(255, 255, 255, 0.08);
+            
+            --accent-primary: #8b5cf6; /* Purple */
+            --t-color: #fbbf24;        /* Gold/Yellow */
+            --t-glow: rgba(251, 191, 36, 0.25);
+            --ct-color: #3b82f6;       /* Bright Blue */
+            --ct-glow: rgba(59, 130, 246, 0.25);
+            
+            --text-main: #f4f4f5;
+            --text-dim: #a1a1aa;
+            
+            --health-high: #10b981;
+            --health-mid: #f59e0b;
+            --health-low: #ef4444;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body { 
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            height: 100vh; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        /* === LOGIN SCREEN === */
+        #login-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(15px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        #login-box {
+            background: var(--bg-panel); 
+            border: 1px solid var(--border-light);
+            padding: 40px 60px; 
+            border-radius: 24px; 
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        h2 { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: 2px; margin: 0; }
+        #room-input {
+            background: rgba(0,0,0,0.3); border: 1px solid var(--border-light); color: white;
+            padding: 15px; font-size: 32px; text-align: center;
+            font-family: 'Rajdhani', monospace; text-transform: uppercase; letter-spacing: 8px;
+            border-radius: 12px; width: 100%; outline: none; transition: 0.3s;
+        }
+        #room-input:focus { border-color: var(--accent-primary); box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
+        #join-btn {
+            background: linear-gradient(135deg, var(--accent-primary), #6d28d9); 
+            color: white; border: none;
+            padding: 15px; font-size: 14px; font-weight: 700; letter-spacing: 1px;
+            border-radius: 12px; cursor: pointer; transition: 0.3s; width: 100%;
+            text-transform: uppercase;
+        }
+        #join-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.4); }
+
+        /* === HEADER === */
+        header { 
+            height: 70px; 
+            background: var(--bg-panel); 
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-light); 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 40px; z-index: 10; 
+        }
+        .logo { 
+            font-family: 'Rajdhani', sans-serif; 
+            font-weight: 800; font-size: 28px; 
+            background: linear-gradient(to right, #fff, #a1a1aa);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: 1px; 
+        }
+        .logo span { color: var(--accent-primary); -webkit-text-fill-color: var(--accent-primary); }
+        
+        .match-info { 
+            font-family: 'Rajdhani', monospace; font-size: 16px; color: var(--text-dim); 
+            background: rgba(255,255,255,0.03); padding: 8px 16px; border-radius: 50px; border: 1px solid var(--border-light);
+        }
+        
+        .controls { display: flex; gap: 24px; align-items: center; }
+
+        /* === DASHBOARD === */
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: 320px 1fr 320px; 
+            flex: 1; 
+            height: calc(100vh - 70px); 
+            overflow: hidden;
+        }
+        
+        .team-panel { 
+            background: rgba(10, 10, 12, 0.4); 
+            backdrop-filter: blur(5px);
+            padding: 20px; 
+            overflow-y: auto; 
+            display: flex; flex-direction: column; gap: 12px;
+            /* Scrollbar styling */
+            scrollbar-width: thin; scrollbar-color: #333 transparent;
+        }
+        
+        .t-side { border-right: 1px solid var(--border-light); }
+        .ct-side { border-left: 1px solid var(--border-light); }
+
+        /* Team Headers */
+        .team-header { 
+            font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 18px; 
+            text-transform: uppercase; letter-spacing: 1px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border-radius: 12px; margin-bottom: 5px;
+            border: 1px solid transparent;
+        }
+        .t-header { 
+            background: linear-gradient(90deg, rgba(251, 191, 36, 0.1), transparent); 
+            color: var(--t-color); border-color: rgba(251, 191, 36, 0.2);
+        }
+        .ct-header { 
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent); 
+            color: var(--ct-color); border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        /* Player Card */
+        .player-card { 
+            background: var(--bg-panel); 
+            border: 1px solid var(--border-light); 
+            border-radius: 12px; 
+            padding: 10px 14px; 
+            display: grid; grid-template-columns: 38px 1fr auto; gap: 12px; 
+            align-items: center; position: relative; overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .player-card:hover { transform: translateX(2px); border-color: rgba(255,255,255,0.2); }
+        .player-card.dead { opacity: 0.5; filter: grayscale(1); }
+        .player-card.local { border: 1px solid var(--accent-primary); background: rgba(139, 92, 246, 0.05); box-shadow: 0 0 15px rgba(139, 92, 246, 0.1); }
+        
+        .avatar { 
+            width: 38px; height: 38px; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 700; font-size: 16px; font-family: 'Rajdhani';
+        }
+        
+        .p-info { display: flex; flex-direction: column; gap: 4px; overflow: hidden; min-width: 0; }
+        .p-top { display: flex; justify-content: space-between; align-items: baseline; }
+        
+        .p-name { font-weight: 600; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .p-weapon { font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+        
+        .hp-bar-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+        .hp-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .p-money { font-family: 'Rajdhani', sans-serif; font-size: 13px; color: #10b981; font-weight: 600; text-align: right; }
+        
+        .ind-c4 { 
+            position: absolute; top: 0; right: 0; bottom: 0; width: 4px; 
+            background: #f59e0b; box-shadow: -2px 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        /* Radar Area */
+        .radar-area { 
+            background-color: #050507;
+            /* Cool Grid Background */
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            position: relative; overflow: hidden; 
+            display: flex; align-items: center; justify-content: center; 
+        }
+        #radar-container { width: 100%; height: 100%; position: relative; }
+        canvas { display: block; }
+        
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #27272a; transition: .3s; border-radius: 20px; border: 1px solid var(--border-light); }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-primary); border-color: var(--accent-primary); }
+        input:checked + .slider:before { transform: translateX(18px); }
+        
+        .ctrl-label { font-size: 13px; font-weight: 500; margin-right: 10px; color: var(--text-dim); }
+        .ctrl-group { display: flex; align-items: center; background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-light); }
+        
+        /* Reset Button */
+        #btn-reset {
+            background: #27272a; border: 1px solid var(--border-light); 
+            color: white; padding: 8px 16px; border-radius: 8px; 
+            cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.2s;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        #btn-reset:hover { background: #3f3f46; border-color: #52525b; }
+
+        .tip { 
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); 
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            padding: 8px 20px; border-radius: 50px; 
+            font-size: 12px; color: #a1a1aa; pointer-events: none; 
+            border: 1px solid var(--border-light);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+        <div id="login-box">
+            <h2>JOIN MATCH</h2>
+            <p style="color:var(--text-dim); font-size:14px; margin:0;">Enter the 5-digit code from the Lua Script</p>
+            <input type="text" id="room-input" placeholder="CODE" maxlength="5" spellcheck="false">
+            <button id="join-btn">Connect to Radar</button>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header>
+        <div class="logo">SHOOK<span>.RADAR</span></div>
+        <div class="match-info" id="status">Waiting for connection...</div>
+        <div class="controls">
+            <div class="ctrl-group">
+                <span class="ctrl-label">Full Map</span>
+                <label class="switch"><input type="checkbox" id="show-fullmap"><span class="slider"></span></label>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Teammates</span>
+                <label class="switch"><input type="checkbox" id="show-team" checked><span class="slider"></span></label>
+            </div>
+            <button id="btn-reset" onclick="resetView()">Reset View</button>
+        </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard">
+        <!-- Terrorist Panel -->
+        <div class="team-panel t-side">
+            <div class="team-header t-header">
+                <span>Terrorist</span>
+                <span id="count-t" style="background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:4px;">0</span>
+            </div>
+            <div id="list-t"></div>
+        </div>
+
+        <!-- Radar Canvas -->
+        <div class="radar-area">
+            <div id="radar-container">
+                <canvas id="radar-canvas"></canvas>
+            </div>
+            <div class="tip" id="view-tip">Drag to Pan • Scroll to Zoom</div>
+        </div>
+
+        <!-- CT Panel -->
+        <div class="team-panel ct-side">
+            <div class="team-header ct-header">
+                <span>Counter-Terrorist</span>
+                <span id="count-ct" style="background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:4px;">0</span>
+            </div>
+            <div id="list-ct"></div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('radar-canvas');
+    const ctx = canvas.getContext('2d');
+    const statusDiv = document.getElementById('status');
+    const viewTip = document.getElementById('view-tip');
+    const fullMapBox = document.getElementById('show-fullmap');
+    const showTeamBox = document.getElementById('show-team');
+    const listT = document.getElementById('list-t');
+    const listCT = document.getElementById('list-ct');
+    const countT = document.getElementById('count-t');
+    const countCT = document.getElementById('count-ct');
+    const loginScreen = document.getElementById('login-screen');
+    const roomInput = document.getElementById('room-input');
+    const joinBtn = document.getElementById('join-btn');
+    const DOT_SIZE = 6; // Slightly larger dots
+
+    let view = { x: 0, y: 0, scale: 1.0, isDragging: false, lastX: 0, lastY: 0 };
+    let activeRoomCode = null;
+
+    // --- LOGIN LOGIC ---
+    joinBtn.addEventListener('click', () => {
+        const code = roomInput.value.trim().toUpperCase();
+        if(code.length > 0) {
+            activeRoomCode = code;
+            loginScreen.style.opacity = '0';
+            setTimeout(() => { loginScreen.style.display = 'none'; }, 500);
+            statusDiv.innerHTML = `CONNECTING TO <span style="color:var(--accent-primary); font-weight:bold">${code}</span>...`;
+            setInterval(fetchRadar, 100);
+            renderLoop();
+        }
+    });
+
+    function resetView() {
+        view.x = 0; view.y = 0; view.scale = 1.0;
+        if(fullMapBox.checked && mapImage.width > 0) {
+             const scaleX = canvas.width / mapImage.width;
+             const scaleY = canvas.height / mapImage.height;
+             view.scale = Math.min(scaleX, scaleY) * 0.9; // 90% fit
+        }
+    }
+
+    fullMapBox.addEventListener('change', () => { resetView(); viewTip.style.opacity = fullMapBox.checked ? '1' : '0'; canvas.style.cursor = fullMapBox.checked ? 'grab' : 'default'; });
+    canvas.addEventListener('mousedown', (e) => { if(!fullMapBox.checked) return; view.isDragging = true; view.lastX = e.offsetX; view.lastY = e.offsetY; canvas.style.cursor = 'grabbing'; });
+    window.addEventListener('mouseup', () => { view.isDragging = false; if(fullMapBox.checked) canvas.style.cursor = 'grab'; });
+    canvas.addEventListener('mousemove', (e) => { if (view.isDragging && fullMapBox.checked) { view.x += e.offsetX - view.lastX; view.y += e.offsetY - view.lastY; view.lastX = e.offsetX; view.lastY = e.offsetY; } });
+    canvas.addEventListener('wheel', (e) => { e.preventDefault(); const factor = 1 + (e.deltaY > 0 ? -0.1 : 0.1); if (fullMapBox.checked) { const mouseX = e.offsetX - canvas.width/2 - view.x; const mouseY = e.offsetY - canvas.height/2 - view.y; const newScale = Math.max(0.1, Math.min(view.scale * factor, 10)); const scaleRatio = newScale / view.scale; view.x -= mouseX * (scaleRatio - 1); view.y -= mouseY * (scaleRatio - 1); view.scale = newScale; } else { view.scale = Math.max(0.5, Math.min(view.scale * factor, 5.0)); } });
+    function resizeCanvas() { canvas.width = canvas.parentElement.offsetWidth; canvas.height = canvas.parentElement.offsetHeight; resetView(); }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    const MAP_DATA = {
+        "de_mirage": { file: "maps/de_mirage.png", pos_x: -3230, pos_y: 1713, scale: 5.0 },
+        "de_dust2":  { file: "maps/de_dust2.png",  pos_x: -2476, pos_y: 3239, scale: 4.4 },
+        "de_inferno":{ file: "maps/de_inferno.png",pos_x: -2087, pos_y: 3870, scale: 4.9 },
+        "de_nuke":   { file: "maps/de_nuke.png",   pos_x: -3453, pos_y: 2887, scale: 7.0 },
+        "de_vertigo":{ file: "maps/de_vertigo.png",pos_x: -3168, pos_y: 1762, scale: 4.0 },
+        "de_ancient":{ file: "maps/de_ancient.png",pos_x: -2953, pos_y: 2164, scale: 5.0 },
+        "de_anubis": { file: "maps/de_anubis.png", pos_x: -2796, pos_y: 3328, scale: 5.22 },
+        "cs_office": { file: "maps/cs_office.png", pos_x: -1838, pos_y: 1858, scale: 4.1 }
+    };
+
+    let currentMapName = "", mapImage = new Image(), isMapLoaded = false, serverData = null, entityCache = {};
+
+    function fetchRadar() {
+        if(!activeRoomCode) return;
+        fetch('get_data.php?id=' + activeRoomCode + '&t=' + Date.now()).then(r => r.json()).then(data => {
+            if(data && data.local) {
+                serverData = data;
+                const incomingMap = data.map || "de_mirage"; 
+                if (incomingMap !== currentMapName) {
+                    currentMapName = incomingMap;
+                    if (MAP_DATA[currentMapName]) { mapImage.src = MAP_DATA[currentMapName].file; mapImage.onload = () => { isMapLoaded = true; if(fullMapBox.checked) resetView(); }; }
+                }
+                statusDiv.innerHTML = `<span style="color:var(--text-dim)">ROOM:</span> <span style="color:#fff; font-weight:bold">${activeRoomCode}</span> &nbsp;<span style="color:#333">|</span>&nbsp; ${currentMapName.toUpperCase()}`;
+                updatePlayerLists(data);
+            }
+        }).catch(() => { statusDiv.innerHTML = `<span style="color:#ef4444">DISCONNECTED</span>`; });
+    }
+
+    function updatePlayerLists(data) {
+        if (!data || !data.local) return;
+        let tPlayers = [], ctPlayers = [];
+        const addToTeam = (p) => { if (p.team === 2) tPlayers.push(p); else if (p.team === 3) ctPlayers.push(p); };
+        
+        const localP = { id: "local", name: data.local.name, team: data.local.team, health: data.local.health, money: data.local.money, weapon: data.local.weapon, has_c4: false };
+        addToTeam(localP);
+
+        data.entities.forEach(ent => {
+            if (ent.health > 0) addToTeam(ent);
+        });
+
+        countT.innerText = tPlayers.length; countCT.innerText = ctPlayers.length;
+        renderList(listT, tPlayers, true); renderList(listCT, ctPlayers, true);
+    }
+
+    function renderList(container, players, isLocalList) {
+        let html = '';
+        players.forEach(p => {
+            const isLocal = (p.id === "local");
+            let hp = p.health || 100;
+            let hpColor = hp < 30 ? 'var(--health-low)' : (hp < 70 ? 'var(--health-mid)' : 'var(--health-high)');
+            let weapon = (p.weapon || "-").replace("weapon_", "").toUpperCase();
+            let money = p.money !== undefined ? `$${p.money}` : "-";
+            let c4Indicator = p.has_c4 ? `<div class="ind-c4"></div>` : "";
+            let teamColor = (p.team === 2) ? 'var(--t-color)' : 'var(--ct-color)';
+
+            html += `
+            <div class="player-card ${hp <= 0 ? 'dead' : ''} ${isLocal ? 'local' : ''}">
+                ${c4Indicator}
+                <div class="avatar" style="color: ${teamColor}; border: 1px solid ${teamColor}40;">
+                    ${p.name ? p.name.charAt(0).toUpperCase() : '?'}
+                </div>
+                <div class="p-info">
+                    <div class="p-top">
+                        <span class="p-name">${p.name || 'Unknown'}</span>
+                        <span class="p-weapon">${weapon}</span>
+                    </div>
+                    <div class="p-bottom">
+                        <div class="hp-bar-bg">
+                            <div class="hp-bar-fill" style="width: ${hp}%; background: ${hpColor}; box-shadow: 0 0 10px ${hpColor}80;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-money">${money}</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function worldToMapPixels(wx, wy, mapConfig) { return { x: (wx - mapConfig.pos_x) / mapConfig.scale, y: (mapConfig.pos_y - wy) / mapConfig.scale }; }
+
+    function processCache() {
+        if(!serverData) return;
+        const activeIds = new Set();
+        const now = Date.now();
+        serverData.entities.forEach(target => {
+            const id = target.id || target.name; activeIds.add(id);
+            if (!entityCache[id]) entityCache[id] = { x: target.x, y: target.y };
+            entityCache[id].x += (target.x - entityCache[id].x) * 0.2; entityCache[id].y += (target.y - entityCache[id].y) * 0.2;
+            entityCache[id].team = target.team; entityCache[id].has_c4 = target.has_c4; entityCache[id].name = target.name;
+            entityCache[id].health = target.health; entityCache[id].yaw = target.yaw;
+        });
+        
+        for (let id in entityCache) {
+            if (entityCache[id].health <= 0 && !entityCache[id].deathTime) entityCache[id].deathTime = now;
+            if (!activeIds.has(parseFloat(id)) && !activeIds.has(id)) {
+                if (entityCache[id].deathTime && (now - entityCache[id].deathTime < 4000)) { /* keep drawing */ } 
+                else delete entityCache[id];
+            }
+        }
+    }
+
+    function renderLoop() {
+        requestAnimationFrame(renderLoop);
+        if(!serverData || !serverData.local) return;
+        const w = canvas.width, h = canvas.height, cx = w / 2, cy = h / 2;
+        ctx.clearRect(0, 0, w, h);
+        const local = serverData.local;
+        const mapConfig = MAP_DATA[currentMapName];
+        const isFullMap = fullMapBox.checked;
+        processCache();
+        ctx.save();
+
+        if (isFullMap && isMapLoaded && mapConfig) {
+            ctx.translate(cx + view.x, cy + view.y); ctx.scale(view.scale, view.scale);
+            ctx.drawImage(mapImage, -mapImage.width / 2, -mapImage.height / 2);
+            
+            drawGameObjects(local, (wx, wy) => {
+                const mp = worldToMapPixels(wx, wy, mapConfig);
+                return { x: mp.x - mapImage.width / 2, y: mp.y - mapImage.height / 2 };
+            }, false);
+
+        } else if (isMapLoaded && mapConfig) {
+            const playerMapPos = worldToMapPixels(local.x, local.y, mapConfig);
+            ctx.translate(cx, cy);
+            const rotation = (local.yaw - 90) * (Math.PI / 180); 
+            ctx.rotate(-rotation); ctx.scale(view.scale, view.scale);
+            ctx.drawImage(mapImage, -playerMapPos.x, -playerMapPos.y);
+            ctx.restore(); ctx.save(); ctx.translate(cx, cy);
+            
+            ctx.shadowBlur = 10; ctx.shadowColor = "white";
+            ctx.fillStyle = "#FFFFFF"; ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            const yawRad = local.yaw * (Math.PI / 180); const c = Math.cos(yawRad); const s = Math.sin(yawRad); const calcScale = mapConfig.scale / view.scale;
+            
+            for (let id in entityCache) {
+                const ent = entityCache[id];
+                if (ent.team === local.team && !showTeamBox.checked) continue;
+                const dx = ent.x - local.x; const dy = ent.y - local.y;
+                let rotX = -(dy * c - dx * s) / calcScale; let rotY = (dx * c + dy * s) / calcScale; 
+                
+                const pad = 20, halfW = (w / 2) - pad, halfH = (h / 2) - pad;
+                let drawX = rotX, drawY = -rotY;
+                if (drawX < -halfW) drawX = -halfW; if (drawX > halfW) drawX = halfW; if (drawY < -halfH) drawY = -halfH; if (drawY > halfH) drawY = halfH;
+                
+                drawPlayerDot(drawX, drawY, ent, false, (local.yaw - 90));
+            }
+            
+            if(serverData.items) {
+                serverData.items.forEach(itm => {
+                    const dx = itm.x - local.x; const dy = itm.y - local.y;
+                    let rotX = -(dy * c - dx * s) / calcScale; let rotY = -(dx * c + dy * s) / calcScale; 
+                    drawItem(rotX, -rotY, itm);
+                });
+            }
+
+            if(serverData.c4) {
+                 const dx = serverData.c4.x - local.x; const dy = serverData.c4.y - local.y;
+                 let rotX = -(dy * c - dx * s) / calcScale; let rotY = -(dx * c + dy * s) / calcScale; 
+                 ctx.shadowBlur = 15; ctx.shadowColor = "#f59e0b";
+                 ctx.fillStyle = "#f59e0b"; ctx.fillRect(rotX-5, -rotY-5, 10, 10); 
+                 ctx.shadowBlur = 0;
+                 ctx.fillStyle = "white"; ctx.font="bold 11px Inter"; ctx.fillText("C4", rotX+7, -rotY);
+            }
+        } else { ctx.fillStyle = "white"; ctx.font = "20px Inter"; ctx.textAlign = "center"; ctx.fillText("NO MAP DATA", cx, cy); }
+        ctx.restore();
+    }
+
+    function drawGameObjects(local, transformFn, rotate) {
+        for (let id in entityCache) {
+            const ent = entityCache[id];
+            if (ent.team === local.team && !showTeamBox.checked) continue;
+            const mp = transformFn(ent.x, ent.y);
+            drawPlayerDot(mp.x, mp.y, ent, false, null);
+        }
+        const lp = transformFn(local.x, local.y);
+        drawPlayerDot(lp.x, lp.y, {name:"ME", team:local.team, health:100, has_c4:false}, true, null);
+        
+        if(serverData.items) {
+            serverData.items.forEach(itm => {
+                const mp = transformFn(itm.x, itm.y);
+                drawItem(mp.x, mp.y, itm);
+            });
+        }
+
+        if(serverData.c4) {
+            const c4p = transformFn(serverData.c4.x, serverData.c4.y);
+            ctx.shadowBlur = 15; ctx.shadowColor = "#f59e0b";
+            ctx.fillStyle = "#f59e0b"; ctx.fillRect(c4p.x-5, c4p.y-5, 10, 10); 
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "white"; ctx.font="bold 11px Inter"; ctx.fillText("C4", c4p.x+7, c4p.y);
+        }
+    }
+
+    function drawItem(x, y, itm) {
+        ctx.textAlign = "center"; ctx.font = "bold 10px Rajdhani"; ctx.shadowColor="black"; ctx.shadowBlur=2;
+        if (itm.type === "smoke") { ctx.fillStyle = "rgba(180,180,180,0.6)"; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2); ctx.fill(); ctx.fillStyle="white"; ctx.fillText("SMOKE", x, y+3); }
+        else if (itm.type === "fire") { ctx.fillStyle = "rgba(255,50,0,0.4)"; ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI*2); ctx.fill(); ctx.fillStyle="white"; ctx.fillText("FIRE", x, y+3); }
+        else if (itm.type === "flash") { ctx.fillStyle = "#FFEE00"; ctx.fillRect(x-3, y-3, 6, 6); ctx.fillStyle="white"; ctx.fillText("FLASH", x, y-6); }
+        else if (itm.type === "he") { ctx.fillStyle = "#FF5555"; ctx.fillText("HE", x, y); }
+    }
+
+    function drawPlayerDot(x, y, ent, isLocal, mapRotationDeg) {
+        if (ent.health <= 0) {
+            ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2; const s = 5;
+            ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s); ctx.stroke();
+            return;
+        }
+        let color = ent.has_c4 ? "#f59e0b" : ((ent.team === 2) ? "#fbbf24" : "#3b82f6");
+        if(isLocal) color = "#FFFFFF";
+
+        // View Cone
+        if (ent.yaw !== undefined && ent.yaw !== null) {
+            let drawYaw = ent.yaw;
+            if (mapRotationDeg !== null) drawYaw = ent.yaw - mapRotationDeg - 90;
+            const rad = (drawYaw) * (Math.PI / 180);
+            let lx, ly;
+            const coneLen = 18;
+            if (mapRotationDeg !== null) { lx = x + Math.cos(rad) * coneLen; ly = y + Math.sin(rad) * coneLen; } 
+            else { const worldRad = ent.yaw * (Math.PI / 180); lx = x + Math.cos(worldRad) * coneLen; ly = y - Math.sin(worldRad) * coneLen; }
+            
+            ctx.strokeStyle = color; ctx.globalAlpha = 0.6; ctx.lineWidth = 2; 
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(lx, ly); ctx.stroke(); ctx.globalAlpha = 1.0;
+        }
+
+        ctx.shadowBlur = 8; ctx.shadowColor = color;
+        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, DOT_SIZE, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (!isLocal) { 
+            ctx.strokeStyle = "rgba(0,0,0,0.8)"; ctx.lineWidth = 1.5; ctx.stroke(); 
+        }
+        
+        if (ent.name && !isLocal) { 
+            ctx.fillStyle = "white"; ctx.font = "bold 11px Inter"; ctx.textAlign = "center"; 
+            ctx.shadowColor="black"; ctx.shadowBlur=4; 
+            ctx.fillText(ent.name, x, y - 10); 
+            ctx.shadowBlur=0; 
+        }
+    }
+
+</script>
+</body>
+</html>
