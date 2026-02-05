@@ -1,5 +1,4 @@
 <?php
-// Disable Caching completely
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
@@ -16,7 +15,6 @@ if (empty($id)) {
 $file = __DIR__ . "/matches/$id.json";
 
 if (file_exists($file)) {
-    // Read file without locking first to be faster
     $content = file_get_contents($file);
     if ($content === false || empty($content)) {
         echo "{}";
@@ -24,7 +22,6 @@ if (file_exists($file)) {
         echo $content;
     }
 } else {
-    // If file doesn't exist yet, return empty object so JS keeps trying
     echo "{}"; 
 }
 ?>
